@@ -38,16 +38,19 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 
-	FILE* brightness = fopen("/sys/class/backlight/acpi_video0/brightness", "r+");
+	FILE* brightness = fopen("/sys/class/backlight/acpi_video0/max_brightness", "r");
 	//string operand, arg;
 	char* operand = malloc( 3*sizeof(char) );
 	char* arg = malloc( strlen(argv[1])*sizeof(char) );
-	int val, max=11;
+	int val, max;
 	strcpy(arg, argv[1]);
 
 	//Get actual Brightness
 	if(brightness != NULL)
 	{
+		get( brightness, operand );
+		max = atoi(operand);
+		brightness = fopen("/sys/class/backlight/acpi_video0/brightness", "r+");
 		get( brightness, operand );
 	}
 	val=atoi(operand);
