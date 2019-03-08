@@ -1,91 +1,115 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
+#include <stdbool.h>
 #include <unistd.h>
-
-void get( FILE* fp, char* str )
-{
-	int c=0;
-	while( str[c]=getc(fp) )	
-	{
-		if( str[c] < 48 || str[c] > 57 )
-		{
-			str[c] = '\0';
-			break;
-		}
-		c++;
-	}
-	
-}
+#include "functions.h" 
 
 int main(int argc, char* argv[])
 {
-	setuid(0);
-	if(argc != 2)
+
+	int opt;
+	int inc_perc = 5, max_brightness, min_brightness = 0, brightness, div = 1, inc = 1;
+	bool mode = false, invalid = false; // default to hard
+	char* operation = "-";
+	char* path;
+	char* soft_dir = "intel_backlight/";
+	char* hard_dir = "acpi_video0/";
+	char* max_brightness_file = "max_brightness";
+	char* brightness_file = "brightness";
+
+	while( ( opt = getopt( argc, argv, "m:o:p:h") ) != -1 )
 	{
-		printf("%s max\n", argv[0]);
-		printf("%s min\n", argv[0]);
-		printf("%s ++\n", argv[0]);
-		printf("%s --\n", argv[0]);
-		printf("%s s\n", argv[0]);
-		exit(1);
+		switch(opt)
+		{
+			case 'm':
+				if( !strcmp(optarg, "s") )
+				{
+					mode = true;
+				}
+				else if( strcmp(optarg, "h" ) )
+				{
+					invalid = true;
+				}
+				break;
+			case 'o':
+				operation = optarg;
+				break;
+			case 'p':
+				inc_perc=atoi(optarg);
+				break;
+			case 'h':
+				invalid = true;
+				break;
+			case ':':
+				printf("Option requires a value\n");
+				break;
+
+		}
 	}
 
-	if(getuid() != 0)
+	if( invalid )
 	{
 		printf("This program must be executed as root\n");
-		exit(1);
+		printf("Usage: %s [moph]\n", argv[0]);
+		printf("\t-m: set mode hard(h) or soft(s), will default to hard mode");
+		printf("\t-o: set operation\n\t ++, --, max, min, - (shows current brightness)\n");
+		printf("\t-p: set percentage, will be ignored on hard mode\n");
+		printf("\t-h: display this help message\n");
+		return 0;
 	}
 
-	FILE* brightness = fopen("/sys/class/backlight/acpi_video0/max_brightness", "r");
-	//string operand, arg;
-	char* operand = malloc( 3*sizeof(char) );
-	char* arg = malloc( strlen(argv[1])*sizeof(char) );
-	int val, max;
-	strcpy(arg, argv[1]);
-
-	//Get actual Brightness
-	if(brightness != NULL)
+	setuid(0);
+	if( strcmp(operation, "-") && getuid() != 0 )
 	{
-		get( brightness, operand );
-		max = atoi(operand);
-		brightness = fopen("/sys/class/backlight/acpi_video0/brightness", "r+");
-		get( brightness, operand );
-	}
-	val=atoi(operand);
-
-	//Make the changes
-	if(strcmp(arg, "max") == 0)
-	{
-		val = max;
+		printf("This program must be executed as root\n");
+		return 1;
 	}
 
-	else if(strcmp(arg, "min")==0)
+	if( !mode )
 	{
-		val = 0;
-	}
+		set_path( hard_dir, max_brightness_file, &path);
+		max_brightness = get_brightness(path);
+		free(path);
 
-	else if(strcmp(arg, "++")==0)
-	{
-		val++;
-	}
-
-	else if(strcmp(arg, "--")==0)
-	{
-		val--;
-	}
-	else if(strcmp(arg, "s")==0)
-	{
+		set_path( hard_dir, brightness_file, &path);
+		brightness = get_brightness(path);
 	}
 	else
 	{
-		fprintf(stderr, "Invalid argument\n");
-		exit(1);
+		set_path( soft_dir, max_brightness_file, &path);
+		max_brightness = get_brightness(path);
+		free(path);
+
+		set_path( soft_dir, brightness_file, &path);
+		brightness = get_brightness(path);
+		min_brightness = max_brightness/100;
+		inc = (max_brightness/100)*inc_perc;
 	}
 
-	fprintf( brightness, "%d", val );
-	fprintf( stdout, "%d\n", val );
+	FILE* f = fopen(path, "r+");
+	if( !strcmp( operation, "max" ) )
+	{
+		brightness = max_brightness;
+	}
+	else if( !strcmp( operation, "min" ) )
+	{
+		brightness = min_brightness;
+	}
+	else if( !strcmp( operation, "++" ) )
+	{
+		brightness += inc;
+	}
+	else if( !strcmp( operation, "--" ) )
+	{
+		brightness -= inc;
+	}
+	else if( operation[0] == '-' )
+	{
+		printf("Current Brightness: %d\n", brightness);
+		return 0;
+	}
 
+	fprintf(f, "%d", brightness);
+	fclose(f);
 	return 0;
 }
