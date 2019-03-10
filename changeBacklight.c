@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 #include <unistd.h>
@@ -105,7 +106,7 @@ int main(int argc, char* argv[])
 	}
 	else if( operation[0] == '-' )
 	{
-		printf("Current Brightness: %d\n", brightness);
+		printf("%d\n", brightness);
 		return 0;
 	}
 
