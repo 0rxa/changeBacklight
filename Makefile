@@ -1,17 +1,18 @@
 CC="gcc"
-DEST="/usr/local/bin/changeBacklight"
+DEST="/usr/local/bin/cb"
+LOCAL="cb"
 
 changeBacklight:
-	$(CC) -o changeBacklight changeBacklight.c
+	$(CC) -o $(LOCAL) changeBacklight.c functions.c
 
 install:
-	$(CC) -o changeBacklight changeBacklight.c
-	cp changeBacklight $(DEST)
+	$(CC) -o $(LOCAL) changeBacklight.c functions.c
+	cp $(LOCAL) $(DEST)
 	chown root.root $(DEST)
 	chmod 4705 $(DEST)
 
 remove:
-	rm /usr/local/bin/changeBacklight
+	rm $(DEST)
 
 clean:
-	rm changeBacklight
+	rm $(LOCAL)
