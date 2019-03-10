@@ -9,7 +9,7 @@ int main(int argc, char* argv[])
 {
 
 	int opt;
-	int inc_perc = 5, max_brightness, min_brightness = 0, brightness, div = 1, inc = 1;
+	int inc_perc = 5, max_brightness, min_brightness = 0, brightness, div = 1, inc = 1, val = -1;
 	bool mode = false, invalid = false; // default to hard
 	char* operation = "-";
 	char* path;
@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 	char* max_brightness_file = "max_brightness";
 	char* brightness_file = "brightness";
 
-	while( ( opt = getopt( argc, argv, "m:o:p:h") ) != -1 )
+	while( ( opt = getopt( argc, argv, "m:o:p:s:h") ) != -1 )
 	{
 		switch(opt)
 		{
@@ -37,6 +37,9 @@ int main(int argc, char* argv[])
 				break;
 			case 'p':
 				inc_perc=atoi(optarg);
+				break;
+			case 's':
+				val=atoi(optarg);
 				break;
 			case 'h':
 				invalid = true;
@@ -60,7 +63,8 @@ int main(int argc, char* argv[])
 	}
 
 	setuid(0);
-	if( strcmp(operation, "-") && getuid() != 0 )
+	//if( (strcmp(operation, "-") && getuid() != 0) || (val != -1 && getuid() != 0))
+	if((getuid() != 0) && ( operation[0] != '-' || val != -1 ))
 	{
 		printf("This program must be executed as root\n");
 		return 1;
@@ -87,8 +91,11 @@ int main(int argc, char* argv[])
 		inc = (max_brightness/100)*inc_perc;
 	}
 
-	FILE* f = fopen(path, "r+");
-	if( !strcmp( operation, "max" ) )
+	if( val != -1 )
+	{
+		brightness = val;
+	}
+	else if( !strcmp( operation, "max" ) )
 	{
 		brightness = max_brightness;
 	}
@@ -110,6 +117,7 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
+	FILE* f = fopen(path, "r+");
 	fprintf(f, "%d", brightness);
 	fclose(f);
 	return 0;
