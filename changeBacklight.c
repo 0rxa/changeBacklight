@@ -57,6 +57,7 @@ int main(int argc, char* argv[])
 		printf("Usage: %s [moph]\n", argv[0]);
 		printf("\t-m: set mode hard(h) or soft(s), will default to hard mode");
 		printf("\t-o: set operation\n\t ++, --, max, min, - (shows current brightness)\n");
+		printf("\t-s: set brightness value\n");
 		printf("\t-p: set percentage, will be ignored on hard mode\n");
 		printf("\t-h: display this help message\n");
 		return 0;
